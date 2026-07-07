@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-forum_db}
+      POSTGRES_USER: ${POSTGRES_USER:-forum_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-forum_pass}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-forum_user} -d ${POSTGRES_DB:-forum_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://forum_user:forum_pass@db:5432/forum_db}
+      SECRET_KEY: ${SECRET_KEY:-change-me-to-a-random-secret-key}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@forum.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
+      ADMIN_NOME: ${ADMIN_NOME:-Administrador}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build: ./frontend
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"
+
+volumes:
+  postgres_data:
