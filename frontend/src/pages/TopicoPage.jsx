@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import api from '../api/client';
 import Layout from '../components/Layout';
+import VoteButtons from '../components/VoteButtons';
 import { useAuth } from '../context/AuthContext';
 
 export default function TopicoPage() {
@@ -60,7 +61,17 @@ export default function TopicoPage() {
     }
   };
 
+  const handleAceitar = async (respostaId, aceita) => {
+    try {
+      await api.patch(`/respostas/${respostaId}/aceitar`, { aceita });
+      load();
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Erro ao marcar resposta');
+    }
+  };
+
   const canModify = (autorId) => isAdmin || user?.id === autorId;
+  const podeAceitar = topico && (isAdmin || user?.id === topico.autor_id);
 
   if (!topico && !error) return <Layout><p>Carregando...</p></Layout>;
 
@@ -70,8 +81,13 @@ export default function TopicoPage() {
         <>
           <Link to={`/comunidades/${topico.comunidade_slug}`}>← Voltar</Link>
           <h1>{topico.titulo} {topico.fixado && <span className="badge">Fixado</span>}</h1>
-          <p>{topico.corpo}</p>
-          <small>Por {topico.autor_nome}</small>
+          <div className="topico-header">
+            <VoteButtons alvoTipo="TOPICO" alvoId={topico.id} votosIniciais={topico.votos} onUpdate={load} autorId={topico.autor_id} />
+            <div>
+              <p>{topico.corpo}</p>
+              <small>Por <Link to={`/perfil/${topico.autor_id}`}>{topico.autor_nome}</Link></small>
+            </div>
+          </div>
         </>
       )}
 
@@ -88,15 +104,28 @@ export default function TopicoPage() {
       <h2>Respostas ({respostas.length})</h2>
       <ul className="list">
         {respostas.map((r) => (
-          <li key={r.id} className="card">
-            <p>{r.corpo}</p>
-            <small>Por {r.autor_nome}</small>
-            {canModify(r.autor_id) && (
-              <div className="actions">
-                <button type="button" onClick={() => setEditResposta({ id: r.id, corpo: r.corpo })}>Editar</button>
-                <button type="button" className="danger" onClick={() => handleDeleteResposta(r.id)}>Excluir</button>
+          <li key={r.id} className={`card${r.aceita ? ' card-aceita' : ''}`}>
+            {r.aceita && <span className="badge badge-aceita">Melhor resposta</span>}
+            <div className="resposta-row">
+              <VoteButtons alvoTipo="RESPOSTA" alvoId={r.id} votosIniciais={r.votos} onUpdate={load} autorId={r.autor_id} />
+              <div className="resposta-body">
+                <p>{r.corpo}</p>
+                <small>Por <Link to={`/perfil/${r.autor_id}`}>{r.autor_nome}</Link></small>
+                <div className="actions">
+                  {podeAceitar && (
+                    r.aceita
+                      ? <button type="button" className="btn-aceita" onClick={() => handleAceitar(r.id, false)}>Remover solução</button>
+                      : <button type="button" className="btn-aceita" onClick={() => handleAceitar(r.id, true)}>Marcar como solução</button>
+                  )}
+                  {canModify(r.autor_id) && (
+                    <>
+                      <button type="button" onClick={() => setEditResposta({ id: r.id, corpo: r.corpo })}>Editar</button>
+                      <button type="button" className="danger" onClick={() => handleDeleteResposta(r.id)}>Excluir</button>
+                    </>
+                  )}
+                </div>
               </div>
-            )}
+            </div>
           </li>
         ))}
       </ul>

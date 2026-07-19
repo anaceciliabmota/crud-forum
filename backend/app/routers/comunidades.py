@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.dependencies.auth import can_modify_comunidade, get_current_user, require_admin
+from app.dependencies.auth import can_modify_comunidade, get_current_user, get_current_user_optional, require_admin
 from app.models import Comunidade, MembroComunidade, Usuario
 from app.schemas import ComunidadeCreate, ComunidadeResponse, ComunidadeUpdate
 from app.services.slug import slugify
@@ -12,7 +12,17 @@ from app.services.slug import slugify
 router = APIRouter(prefix="/comunidades", tags=["comunidades"])
 
 
-def _to_response(comunidade: Comunidade) -> ComunidadeResponse:
+def _to_response(comunidade: Comunidade, db: Session | None = None, usuario_id: int | None = None) -> ComunidadeResponse:
+    eh_membro = False
+    if db is not None and usuario_id is not None:
+        eh_membro = (
+            db.query(MembroComunidade)
+            .filter(
+                MembroComunidade.usuario_id == usuario_id,
+                MembroComunidade.comunidade_id == comunidade.id,
+            )
+            .first()
+        ) is not None
     return ComunidadeResponse(
         id=comunidade.id,
         nome=comunidade.nome,
@@ -20,6 +30,7 @@ def _to_response(comunidade: Comunidade) -> ComunidadeResponse:
         descricao=comunidade.descricao,
         criador_id=comunidade.criador_id,
         criador_nome=comunidade.criador.nome if comunidade.criador else None,
+        eh_membro=eh_membro,
         created_at=comunidade.created_at,
     )
 
@@ -60,11 +71,15 @@ def create_comunidade(
 
 
 @router.get("/{slug}", response_model=ComunidadeResponse)
-def get_comunidade(slug: str, db: Annotated[Session, Depends(get_db)]):
+def get_comunidade(
+    slug: str,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[Usuario | None, Depends(get_current_user_optional)] = None,
+):
     comunidade = db.query(Comunidade).filter(Comunidade.slug == slug).first()
     if not comunidade:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Comunidade não encontrada")
-    return _to_response(comunidade)
+    return _to_response(comunidade, db=db, usuario_id=current_user.id if current_user else None)
 
 
 @router.put("/{comunidade_id}", response_model=ComunidadeResponse)
@@ -128,7 +143,6 @@ def entrar_comunidade(
     db.add(membro)
     db.commit()
     return {"detail": "Entrou na comunidade"}
-
 
 @router.delete("/{comunidade_id}/sair", status_code=status.HTTP_204_NO_CONTENT)
 def sair_comunidade(

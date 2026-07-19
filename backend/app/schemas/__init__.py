@@ -5,6 +5,24 @@ from pydantic import BaseModel, EmailStr, Field
 from app.models import UserRole
 
 
+class VotoInfo(BaseModel):
+    upvotes: int
+    downvotes: int
+    score: int
+    meu_voto: int | None = None
+
+
+class VotoCreate(BaseModel):
+    alvo_tipo: str = Field(pattern="^(TOPICO|RESPOSTA)$")
+    alvo_id: int
+    valor: int = Field(ge=-1, le=1)
+
+
+class VotoDelete(BaseModel):
+    alvo_tipo: str = Field(pattern="^(TOPICO|RESPOSTA)$")
+    alvo_id: int
+
+
 class UsuarioBase(BaseModel):
     nome: str = Field(min_length=2, max_length=100)
     email: EmailStr
@@ -32,6 +50,15 @@ class UsuarioRoleUpdate(BaseModel):
     role: UserRole
 
 
+class UsuarioPublicResponse(BaseModel):
+    id: int
+    nome: str
+    role: UserRole
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
@@ -54,6 +81,7 @@ class ComunidadeResponse(BaseModel):
     descricao: str
     criador_id: int
     criador_nome: str | None = None
+    eh_membro: bool = False
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -83,6 +111,7 @@ class TopicoResponse(BaseModel):
     comunidade_slug: str | None = None
     fixado: bool
     fechado: bool
+    votos: VotoInfo = VotoInfo(upvotes=0, downvotes=0, score=0)
     created_at: datetime
     updated_at: datetime
 
@@ -105,7 +134,24 @@ class RespostaResponse(BaseModel):
     autor_nome: str | None = None
     topico_id: int
     parent_id: int | None
+    aceita: bool
+    votos: VotoInfo = VotoInfo(upvotes=0, downvotes=0, score=0)
     created_at: datetime
     updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class RespostaAceitarUpdate(BaseModel):
+    aceita: bool
+
+
+class PerfilResponse(BaseModel):
+    usuario: UsuarioPublicResponse
+    topicos: list[TopicoResponse]
+    respostas: list[RespostaResponse]
+
+
+class BuscaResponse(BaseModel):
+    comunidades: list[ComunidadeResponse]
+    topicos: list[TopicoResponse]

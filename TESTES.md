@@ -1,10 +1,10 @@
 # Documentação de Testes — Fórum de Comunidades
 
-Este documento registra a rodada de testes realizada na aplicação, o que foi validado e como reproduzir os testes.
+Este documento registra as rodadas de testes realizadas na aplicação, o que foi validado e como reproduzir os testes.
 
-**Data da execução:** 2026-07-03  
+**Última execução:** 2026-07-19  
 **Ambiente:** Docker Compose (`docker compose up --build`)  
-**Resultado:** 26 testes passaram, 0 falharam
+**Resultado:** 38 testes passaram, 0 falharam
 
 ---
 
@@ -153,9 +153,38 @@ Todos os critérios de aceite do plano de trabalho foram atendidos:
 
 ---
 
+## 7. Features v2 — Testes adicionados
+
+| Teste | Método | Endpoint | Resultado esperado | Como foi validado |
+|-------|--------|----------|-------------------|-------------------|
+| Membro upvota tópico alheio | POST | `/api/votos` | HTTP 201 | Voto criado com `valor=1` |
+| Votar no próprio conteúdo | POST | `/api/votos` | HTTP 400 | Regra de negócio bloqueou |
+| Visitante vota | POST | `/api/votos` | HTTP 401 | Sem token rejeitado |
+| Score correto após upvote | GET | `/api/topicos/{id}` | `score=1` | Campo `votos.score` verificado |
+| Remover voto | DELETE | `/api/votos?alvo_tipo=TOPICO&alvo_id={id}` | HTTP 204 | Voto excluído |
+| Autor aceita resposta | PATCH | `/api/respostas/{id}/aceitar` | HTTP 200 | `aceita=true` na resposta |
+| Não-autor aceita | PATCH | `/api/respostas/{id}/aceitar` | HTTP 403 | Permissão negada |
+| Só uma aceita por tópico | PATCH | (aceitar segunda) | `count=1` | Primeira desmarcada |
+| Perfil público | GET | `/api/usuarios/{id}/perfil` | HTTP 200 | Nome, tópicos, respostas |
+| Busca por termo válido | GET | `/api/busca?q=demo` | HTTP 200, comunidades retornadas | Comunidade demo encontrada |
+| Busca com 1 char | GET | `/api/busca?q=x` | HTTP 422 | Validação mínimo 2 chars |
+
+---
+
+## 8. Resumo final (rodada v2)
+
+```
+Passou: 38
+Falhou: 0
+Total:  38
+```
+
+---
+
 ## Referências
 
-- Plano de trabalho: `.cursor/plans/forum_crud_web_c720fd41.plan.md`
+- Plano de trabalho original: `.cursor/plans/forum_crud_web_c720fd41.plan.md`
+- Plano de features v2: `.cursor/plans/features_forum_v2_feb490e4.plan.md`
 - Instruções de execução: [`README.md`](README.md)
 - Script de testes: [`scripts/run_tests.sh`](scripts/run_tests.sh)
 - API interativa: http://localhost:8000/docs

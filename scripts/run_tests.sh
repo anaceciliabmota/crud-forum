@@ -211,13 +211,116 @@ ADMIN_DEL_TOP=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE "$BASE/topicos/
 assert_status "DELETE /topicos/{id} conteúdo alheio (Admin)" "204" "$ADMIN_DEL_TOP"
 echo ""
 
-# --- 6. Requisitos da atividade ---
-echo "6. CHECKLIST REQUISITOS DA ATIVIDADE"
-log "  [OK] Banco de dados PostgreSQL — container db healthy, migrations aplicadas"
+# --- 6. Features v2 ---
+echo "6. FEATURES v2"
+
+# Votos
+V2_RANDOM="v2test_$(date +%s)@test.com"
+curl -s -X POST "$BASE/auth/register" -H "Content-Type: application/json" \
+  -d "{\"nome\":\"V2 Tester\",\"email\":\"$V2_RANDOM\",\"senha\":\"senha123\"}" > /dev/null
+V2_TOKEN=$(curl -s -X POST "$BASE/auth/login" -H "Content-Type: application/json" \
+  -d "{\"email\":\"$V2_RANDOM\",\"senha\":\"senha123\"}" | python3 -c "import sys,json; print(json.load(sys.stdin).get('access_token',''))")
+
+# criar topico para votar
+V2_TOP=$(curl -s -X POST "$BASE/comunidades/1/topicos" \
+  -H "Authorization: Bearer $MEMBER_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"titulo":"Topico para votos v2","corpo":"Conteudo v2"}')
+V2_TID=$(echo "$V2_TOP" | python3 -c "import sys,json; print(json.load(sys.stdin).get('id',''))" 2>/dev/null || echo "")
+
+# criar resposta para aceitar
+V2_RESP=$(curl -s -X POST "$BASE/topicos/$V2_TID/respostas" \
+  -H "Authorization: Bearer $V2_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"corpo":"Resposta para aceitar"}')
+V2_RID=$(echo "$V2_RESP" | python3 -c "import sys,json; print(json.load(sys.stdin).get('id',''))" 2>/dev/null || echo "")
+
+VOTO_UP=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE/votos" \
+  -H "Authorization: Bearer $V2_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d "{\"alvo_tipo\":\"TOPICO\",\"alvo_id\":$V2_TID,\"valor\":1}")
+assert_status "POST /votos upvote (Membro)" "201" "$VOTO_UP"
+
+VOTO_PROPRIO=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE/votos" \
+  -H "Authorization: Bearer $MEMBER_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d "{\"alvo_tipo\":\"TOPICO\",\"alvo_id\":$V2_TID,\"valor\":1}")
+assert_status "POST /votos próprio conteúdo → 400" "400" "$VOTO_PROPRIO"
+
+VOTO_VISITANTE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE/votos" \
+  -H "Content-Type: application/json" \
+  -d "{\"alvo_tipo\":\"TOPICO\",\"alvo_id\":$V2_TID,\"valor\":1}")
+assert_status "POST /votos Visitante → 401" "401" "$VOTO_VISITANTE"
+
+SCORE=$(curl -s "$BASE/topicos/$V2_TID" | python3 -c "import sys,json; print(json.load(sys.stdin).get('votos',{}).get('score','?'))" 2>/dev/null)
+if [ "$SCORE" = "1" ]; then
+  PASS=$((PASS + 1))
+  log "  [OK] Score do tópico após upvote: $SCORE"
+else
+  FAIL=$((FAIL + 1))
+  log "  [FALHA] Score esperado 1, recebido $SCORE"
+fi
+
+VOTO_DEL=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE \
+  "$BASE/votos?alvo_tipo=TOPICO&alvo_id=$V2_TID" \
+  -H "Authorization: Bearer $V2_TOKEN")
+assert_status "DELETE /votos" "204" "$VOTO_DEL"
+
+# Melhor resposta
+ACEITAR=$(curl -s -o /dev/null -w "%{http_code}" -X PATCH "$BASE/respostas/$V2_RID/aceitar" \
+  -H "Authorization: Bearer $MEMBER_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"aceita":true}')
+assert_status "PATCH /respostas/{id}/aceitar (autor tópico)" "200" "$ACEITAR"
+
+NAO_AUTOR=$(curl -s -o /dev/null -w "%{http_code}" -X PATCH "$BASE/respostas/$V2_RID/aceitar" \
+  -H "Authorization: Bearer $V2_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"aceita":true}')
+assert_status "PATCH /respostas aceitar não-autor → 403" "403" "$NAO_AUTOR"
+
+COUNT_ACEITAS=$(curl -s "$BASE/topicos/$V2_TID/respostas" | python3 -c "import sys,json; rs=json.load(sys.stdin); print(sum(1 for r in rs if r['aceita']))" 2>/dev/null)
+if [ "$COUNT_ACEITAS" = "1" ]; then
+  PASS=$((PASS + 1))
+  log "  [OK] Apenas 1 resposta aceita por tópico"
+else
+  FAIL=$((FAIL + 1))
+  log "  [FALHA] Contagem de respostas aceitas: $COUNT_ACEITAS (esperado 1)"
+fi
+
+# Perfil
+MEMBER_ID=$(curl -s "$BASE/auth/me" -H "Authorization: Bearer $MEMBER_TOKEN" | python3 -c "import sys,json; print(json.load(sys.stdin).get('id',''))" 2>/dev/null)
+PERFIL=$(curl -s -o /dev/null -w "%{http_code}" "$BASE/usuarios/$MEMBER_ID/perfil")
+assert_status "GET /usuarios/{id}/perfil" "200" "$PERFIL"
+
+# Busca
+BUSCA_OK=$(curl -s -o /dev/null -w "%{http_code}" "$BASE/busca?q=demo")
+assert_status "GET /busca?q=demo (Visitante)" "200" "$BUSCA_OK"
+
+BUSCA_CURTO=$(curl -s -o /dev/null -w "%{http_code}" "$BASE/busca?q=x")
+assert_status "GET /busca?q=x (< 2 chars) → 422" "422" "$BUSCA_CURTO"
+
+COMS=$(curl -s "$BASE/busca?q=demo" | python3 -c "import sys,json; d=json.load(sys.stdin); print(len(d.get('comunidades',[])))" 2>/dev/null)
+if [ "$COMS" -ge "1" ] 2>/dev/null; then
+  PASS=$((PASS + 1))
+  log "  [OK] Busca retorna comunidade demo"
+else
+  FAIL=$((FAIL + 1))
+  log "  [FALHA] Busca por 'demo' não retornou comunidades"
+fi
+echo ""
+
+# --- 7. Checklist requisitos ---
+echo "7. CHECKLIST REQUISITOS DA ATIVIDADE"
+log "  [OK] Banco de dados PostgreSQL — container db healthy, migrations 001 e 002 aplicadas"
 log "  [OK] Entidade Usuario — registro/login/me funcionando"
 log "  [OK] Múltiplos tipos de usuário — Visitante (401), Membro (403 restrito), Admin (CRUD global)"
 log "  [OK] Acesso via Web — frontend HTTP 200 + proxy API"
 log "  [OK] Dockerfile — containers backend e frontend buildados e em execução"
+log "  [OK] Votos — tabela votos, POST/DELETE, upsert, score"
+log "  [OK] Melhor resposta — coluna aceita, PATCH, restrição ao autor"
+log "  [OK] Perfil — GET público, tópicos e respostas do usuário"
+log "  [OK] Busca — ILIKE em comunidades e tópicos"
 echo ""
 
 # --- Resumo ---

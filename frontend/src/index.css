@@ -141,6 +141,29 @@ button.danger {
   margin-left: 0.5rem;
 }
 
+/* Badge dentro de card-flags não precisa de margin-left */
+.card-flags {
+  margin-bottom: 0.5rem;
+}
+
+.card-flags .badge {
+  margin-left: 0;
+}
+
+.badge-membro {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.75rem;
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #86efac;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-top: 0.5rem;
+}
+
 .actions {
   margin-top: 0.5rem;
 }
@@ -173,3 +196,263 @@ th, td {
 .admin-block li {
   margin-bottom: 0.5rem;
 }
+
+/* Votos */
+.vote-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
+.vote-buttons {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.vote-hint {
+  font-size: 0.78rem;
+  font-style: italic;
+  color: #92400e;
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.vote-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.65rem;
+  border: 1.5px solid #d1d5db;
+  border-radius: 999px;
+  background: transparent;
+  color: #6b7280;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  line-height: 1;
+}
+
+.vote-btn:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+/* Like — ativo: azul primário */
+.vote-btn-like:hover:not(:disabled) {
+  background: #eff6ff;
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+.vote-btn-like.ativo {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+}
+
+/* Dislike — ativo: vermelho sutil */
+.vote-btn-dislike:hover:not(:disabled) {
+  background: #fff1f2;
+  border-color: #f43f5e;
+  color: #f43f5e;
+}
+
+.vote-btn-dislike.ativo {
+  background: #fef2f2;
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.vote-count {
+  font-variant-numeric: tabular-nums;
+  min-width: 1ch;
+  text-align: center;
+}
+
+.topico-row,
+.resposta-row,
+.topico-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.resposta-body {
+  flex: 1;
+  width: 100%;
+}
+
+/* Badge melhor resposta */
+.badge-aceita {
+  background: #16a34a;
+  color: white;
+}
+
+.card-aceita {
+  border-left: 4px solid #16a34a;
+}
+
+.btn-aceita {
+  background: #16a34a !important;
+}
+
+.btn-aceita:hover {
+  background: #15803d !important;
+}
+
+/* Busca */
+.searchbar-wrap {
+  position: relative;
+  flex: 1;
+  max-width: 320px;
+  margin: 0 1rem;
+}
+
+.searchbar-form {
+  display: flex;
+}
+
+.searchbar-input {
+  width: 100%;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid #475569;
+  border-radius: 4px;
+  background: #334155;
+  color: white;
+  font-size: 0.9rem;
+}
+
+.searchbar-input::placeholder {
+  color: #94a3b8;
+}
+
+.searchbar-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 100;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.dropdown-label {
+  margin: 0;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: #666;
+  background: #f8f8f8;
+  border-bottom: 1px solid #eee;
+  text-transform: uppercase;
+}
+
+.dropdown-item {
+  display: block;
+  padding: 0.5rem 0.75rem;
+  color: #222;
+  text-decoration: none;
+  font-size: 0.9rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.dropdown-item:hover {
+  background: #f0f4ff;
+}
+
+.dropdown-all {
+  color: #2563eb;
+  font-weight: 500;
+}
+
+/* Perfil */
+.perfil-header {
+  margin-bottom: 1rem;
+}
+
+.abas {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.aba {
+  padding: 0.5rem 1.2rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.aba.ativa {
+  background: #2563eb;
+  color: white;
+  border-color: #2563eb;
+}
+
+.user-link {
+  color: white !important;
+}
+
+/* Botão Entrar na comunidade */
+.btn-entrar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 1.1rem;
+  border: 2px solid #2563eb;
+  border-radius: 6px;
+  background: transparent;
+  color: #2563eb;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+  margin-top: 0.5rem;
+}
+
+.btn-entrar:hover {
+  background: #2563eb;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+}
+
+.btn-entrar:focus-visible {
+  outline: 3px solid #93c5fd;
+  outline-offset: 2px;
+}
+
+.btn-entrar:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* Cabeçalho da comunidade */
+.comunidade-header {
+  margin-bottom: 1.5rem;
+}
+
+.comunidade-header h1 {
+  margin: 0.25rem 0 0.25rem;
+}
+
+.comunidade-header p {
+  margin: 0 0 0.75rem;
+  color: #555;
+}
+

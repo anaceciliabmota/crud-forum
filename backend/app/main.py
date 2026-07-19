@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import admin, auth, comunidades, respostas, topicos
+from app.routers import admin, auth, comunidades, respostas, topicos, usuarios, votos, busca
 
 app = FastAPI(title="Fórum de Comunidades", version="1.0.0")
 
@@ -18,6 +18,9 @@ app.include_router(comunidades.router, prefix="/api")
 app.include_router(topicos.router, prefix="/api")
 app.include_router(respostas.router, prefix="/api")
 app.include_router(admin.router, prefix="/api")
+app.include_router(usuarios.router, prefix="/api")
+app.include_router(votos.router, prefix="/api")
+app.include_router(busca.router, prefix="/api")
 
 
 @app.get("/api/health")

@@ -71,17 +71,31 @@ ativ3/
 └── frontend/         # React (Vite) + Nginx
 ```
 
+## Funcionalidades
+
+### Base
+- Comunidades (CRUD)
+- Tópicos e respostas (CRUD)
+- Entrar/sair de comunidades
+- Controle de acesso: Visitante / Membro / Admin
+
+### Features v2
+- **Votos up/down** — em tópicos e respostas (sem votar no próprio conteúdo)
+- **Busca** — por título de tópico ou nome de comunidade (ILIKE, debounce no front)
+- **Perfil de usuário** — `/perfil/:id` com tópicos e respostas publicados
+- **Melhor resposta** — autor do tópico marca solução; só uma aceita por tópico
+
 ## Fluxos de demonstração
 
-1. **Visitante:** abra http://localhost:3000, navegue comunidades e tópicos sem login
-2. **Membro:** registre-se, crie comunidade/tópico/resposta; tente excluir conteúdo alheio (403)
+1. **Visitante:** abra http://localhost:3000, navegue comunidades e tópicos sem login; use a busca no header
+2. **Membro:** registre-se, crie comunidade/tópico/resposta; vote em conteúdo alheio; marque melhor resposta no seu tópico
 3. **Admin:** login com admin@forum.com; acesse `/admin` para promover usuários, fixar/excluir conteúdo
 
 ## Testes e validação
 
 Documentação completa dos testes executados: [`TESTES.md`](TESTES.md)
 
-Para rodar a suíte automatizada:
+Para rodar a suíte automatizada (38 testes):
 
 ```bash
 ./scripts/run_tests.sh

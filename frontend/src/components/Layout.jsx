@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import SearchBar from './SearchBar';
 import { useAuth } from '../context/AuthContext';
 
 export default function Layout({ children }) {
@@ -8,10 +9,11 @@ export default function Layout({ children }) {
     <div className="app">
       <header className="header">
         <Link to="/" className="logo">Fórum de Comunidades</Link>
+        <SearchBar />
         <nav>
           {user ? (
             <>
-              <span className="user-info">Olá, {user.nome} ({user.role})</span>
+              <span className="user-info">Olá, <Link to={`/perfil/${user.id}`} className="user-link">{user.nome}</Link> ({user.role})</span>
               {isAdmin && <Link to="/admin">Admin</Link>}
               <button type="button" onClick={logout} className="btn-link">Sair</button>
             </>

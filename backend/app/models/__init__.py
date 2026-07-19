@@ -1,3 +1,3 @@
-from app.models.entities import Comunidade, MembroComunidade, Resposta, Topico, UserRole, Usuario
+from app.models.entities import AlvoTipo, Comunidade, MembroComunidade, Resposta, Topico, UserRole, Usuario, Voto
 
-__all__ = ["Usuario", "UserRole", "Comunidade", "MembroComunidade", "Topico", "Resposta"]
+__all__ = ["Usuario", "UserRole", "Comunidade", "MembroComunidade", "Topico", "Resposta", "Voto", "AlvoTipo"]

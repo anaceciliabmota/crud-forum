@@ -7,6 +7,11 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database import Base
 
 
+class AlvoTipo(str, enum.Enum):
+    TOPICO = "TOPICO"
+    RESPOSTA = "RESPOSTA"
+
+
 class UserRole(str, enum.Enum):
     MEMBRO = "MEMBRO"
     ADMIN = "ADMIN"
@@ -85,6 +90,7 @@ class Resposta(Base):
     autor_id: Mapped[int] = mapped_column(ForeignKey("usuarios.id"), nullable=False)
     topico_id: Mapped[int] = mapped_column(ForeignKey("topicos.id"), nullable=False)
     parent_id: Mapped[int | None] = mapped_column(ForeignKey("respostas.id"), nullable=True)
+    aceita: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
@@ -93,3 +99,17 @@ class Resposta(Base):
     autor: Mapped["Usuario"] = relationship(back_populates="respostas")
     topico: Mapped["Topico"] = relationship(back_populates="respostas")
     parent: Mapped["Resposta | None"] = relationship(remote_side="Resposta.id", backref="filhas")
+
+
+class Voto(Base):
+    __tablename__ = "votos"
+    __table_args__ = (UniqueConstraint("usuario_id", "alvo_tipo", "alvo_id", name="uq_voto_usuario_alvo"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    usuario_id: Mapped[int] = mapped_column(ForeignKey("usuarios.id"), nullable=False)
+    alvo_tipo: Mapped[AlvoTipo] = mapped_column(Enum(AlvoTipo, name="alvo_tipo_enum"), nullable=False)
+    alvo_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    valor: Mapped[int] = mapped_column(Integer, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+    usuario: Mapped["Usuario"] = relationship()
